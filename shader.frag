@@ -11,6 +11,7 @@ https://www.khanacademy.org/computer-programming/my-best-renderer-yet-webgl-raym
 https://iquilezles.org/
 https://www.pluralsight.com/blog/film-games/understanding-different-light-types
 https://www.shadertoy.com/view/NlfGDs
+https://github.com/yeataro/TD-Raymarching-System/blob/master/src/shader/glsl_Raymarching.glsl
 
 */
 
@@ -60,24 +61,29 @@ const Sphere[3] scene = Sphere[](
     )
 );
 
-const Light[2] lights = Light[](
+const Light[3] lights = Light[](
     Light(
         vec3(5.0, 8.0, 1.0),
         vec3(0.6, 0.0, 0.8),
-        1.0
+        0.8
     ),
     Light(
         vec3(-3.0, 4.0, 5.0),
         vec3(0.2, 0.3, 0.5),
-        2.0
+        1.6
+    ), 
+    Light(
+        vec3(0.0, 10.0, 0.0),
+        vec3(1.0,0.8,0.2),
+        0.6
     )
 );
 
 float sphereSDF(vec3 pos, Sphere sphere) {
-    return distance(pos, sphere.pos) - sphere.radius * (sin(time) + 3.0) / 3.0;
+    return distance(pos, sphere.pos + vec3(0.0, cos(time * 3.0) / 5.0, 0.0)) - sphere.radius * (sin(time) + 3.0) / 3.0;
 }
 
-float k = 0.5;
+float k = 0.4;
 
 float sMin(float a, float b) {
     float h = clamp(0.5 + 0.5 * (a - b) / k, 0.0, 1.0);
