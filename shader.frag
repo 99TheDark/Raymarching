@@ -17,6 +17,7 @@ https://www.shadertoy.com/view/NlfGDs
 precision highp float;
 
 uniform vec2 size;
+uniform float time;
 
 in vec2 pos;
 out vec4 color;
@@ -73,7 +74,7 @@ const Light[2] lights = Light[](
 );
 
 float sphereSDF(vec3 pos, Sphere sphere) {
-    return distance(pos, sphere.pos) - sphere.radius;
+    return distance(pos, sphere.pos) - sphere.radius * (sin(time) + 3.0) / 3.0;
 }
 
 float k = 0.5;
