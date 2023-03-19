@@ -11,6 +11,8 @@ var main = function(vertexSource, fragmentSource) {
     const canvas = document.getElementById("canvas");
     const gl = canvas.getContext("webgl2");
 
+    const fps = document.getElementById("fps");
+
     [canvas.width, canvas.height] = [canvas.style.width, canvas.style.height] = [innerWidth, innerHeight];
 
     if(!gl) throw "Your browser does not support WebGL.";
@@ -73,14 +75,30 @@ var main = function(vertexSource, fragmentSource) {
 
     gl.viewport(0, 0, canvas.width, canvas.height);
 
-    let start = performance.now();
+    let last = performance.now();
+    let time = 0;
+    let timeBuffer = [];
+    let timeBufferLength = 200;
     const draw = function() {
+        let now = performance.now();
+
         gl.clearColor(1.0, 1.0, 1.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        gl.uniform1f(timeUniformLocation, (performance.now() - start) / 1000);
+        let dt = now - last;
+        time += dt;
+
+        timeBuffer.push(dt);
+        if(timeBuffer.length > timeBufferLength) timeBuffer.shift();
+
+        gl.uniform1f(timeUniformLocation, time / 1000);
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        let avg = timeBuffer.reduce((delta, total) => total + delta, 0) / timeBufferLength;
+        fps.innerText = Math.floor(1000 / avg);
+
+        last = performance.now();
         
         requestAnimationFrame(draw);
     };
