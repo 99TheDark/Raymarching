@@ -11,3 +11,11 @@ canvas {
     position: fixed;
     inset: 0px;
 }
+
+#fps {
+    position: fixed;
+    inset: 30px;
+    color: white;
+    font-family: sans-serif;
+    font-size: 50px;
+}
