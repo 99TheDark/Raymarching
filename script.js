@@ -69,14 +69,21 @@ var main = function(vertexSource, fragmentSource) {
     const sizeUniformLocation = gl.getUniformLocation(program, "size");
     gl.uniform2f(sizeUniformLocation, canvas.width, canvas.height);
 
+    const timeUniformLocation = gl.getUniformLocation(program, "time");
+
     gl.viewport(0, 0, canvas.width, canvas.height);
 
+    let start = performance.now();
     const draw = function() {
         gl.clearColor(1.0, 1.0, 1.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+        gl.uniform1f(timeUniformLocation, (performance.now() - start) / 1000);
+
         gl.drawArrays(gl.TRIANGLES, 0, 6);
+        
+        requestAnimationFrame(draw);
     };
 
-    draw();
+    requestAnimationFrame(draw);
 };
