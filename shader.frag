@@ -29,7 +29,7 @@ out vec4 color;
 #define EPSILON 0.0001
 #define MIN_DIST 0.1
 #define MAX_DIST 200.0
-#define MAX_STEPS 100
+#define MAX_STEPS 150
 
 struct Sphere {
     vec3 pos;
