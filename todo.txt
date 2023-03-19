@@ -1,0 +1,4 @@
+• Uniform camera
+• Multiple shapes
+• Buffer for a bunch of shapes
+• Clipping frustum
