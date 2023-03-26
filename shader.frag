@@ -28,7 +28,7 @@ out vec4 color;
 #define TAU 6.28318530717958647692
 #define EPSILON 0.0001
 #define MIN_DIST 0.1
-#define MAX_DIST 200.0
+#define MAX_DIST 1000.0
 #define MAX_STEPS 150
 
 struct Sphere {
@@ -61,21 +61,16 @@ const Sphere[3] scene = Sphere[](
     )
 );
 
-const Light[3] lights = Light[](
+const Light[2] lights = Light[](
     Light(
-        vec3(5.0, 8.0, 1.0),
-        vec3(0.6, 0.0, 0.8),
-        0.8
+        vec3(1.0, 10.0, 3.0),
+        vec3(1.0),
+        1.0
     ),
     Light(
-        vec3(-3.0, 4.0, 5.0),
-        vec3(0.2, 0.3, 0.5),
-        1.6
-    ), 
-    Light(
-        vec3(0.0, 10.0, 0.0),
-        vec3(1.0,0.8,0.2),
-        0.6
+        vec3(-4.0, 5.0, -10.0),
+        vec3(1.0),
+        1.0
     )
 );
 
@@ -83,36 +78,45 @@ float sphereSDF(vec3 pos, Sphere sphere) {
     return distance(pos, sphere.pos + vec3(0.0, cos(time * 3.0) / 5.0, 0.0)) - sphere.radius * (sin(time) + 3.0) / 3.0;
 }
 
+// IDK how to do this w/ color
 float k = 0.4;
-
 float sMin(float a, float b) {
     float h = clamp(0.5 + 0.5 * (a - b) / k, 0.0, 1.0);
     return mix(a, b, h) - k * h * (1.0 - h);
 }
 
-float minDist(vec3 pos) {
+vec4 minDist(vec3 pos) {
     float curMin = MAX_INT;
+    vec3 color = vec3(1.0);
     for(int i = 0; i < scene.length(); i++) {
-        curMin = sMin(curMin, sphereSDF(pos, scene[i]));
+        float tempMin = min(curMin, sphereSDF(pos, scene[i]));
+        if(tempMin < curMin) {
+            curMin = tempMin;
+            color = scene[i].color;
+        }
     }
-    curMin = sMin(curMin, pos.y + 2.0);
-    return curMin;
+    float tempMin = min(curMin, pos.y + 2.0);
+    if(tempMin < curMin) {
+        curMin = tempMin;
+        color = vec3(mod(floor(pos.x) + floor(pos.z), 2.0));
+    }
+    return vec4(curMin, color);
 }
 
 vec3 getNormal(vec3 pos) {
-    float dist = minDist(pos);
+    float dist = minDist(pos).x;
     vec2 epsilon = vec2(EPSILON, 0.0);
     vec3 normal = dist - vec3(
-        minDist(pos - epsilon.xyy),
-        minDist(pos - epsilon.yxy),
-        minDist(pos - epsilon.yyx)
+        minDist(pos - epsilon.xyy).x,
+        minDist(pos - epsilon.yxy).x,
+        minDist(pos - epsilon.yyx).x
     );
 
     return normalize(normal);
 }
 
 vec3 getLight(vec3 point) {
-    vec3 lightColor = vec3(0.0);
+    vec3 lightColor = vec3(0.0); // Global illumination
     for(int i = 0; i < lights.length(); i++) {
         Light light = lights[i];
 
@@ -123,25 +127,35 @@ vec3 getLight(vec3 point) {
 
         lightColor += light.color * light.intensity * diffuse;
     }
-    return lightColor;
+    return lightColor / float(lights.length());
 }
 
-float raymarch(vec3 dir) {
+vec4 raymarch(vec3 dir) {
     float dist = 0.0;
+    vec3 color = vec3(1.0);
     for(int i = 0; i < MAX_STEPS; i++) {
-        dist += minDist(dir * dist);
-        if(dist < MIN_DIST || dist > MAX_DIST) break;
+        vec4 minimum = minDist(dir * dist);
+        dist += minimum.x;
+        color = minimum.yzw;
+        if(dist <= MIN_DIST) break;
+        if(dist >= MAX_DIST) {
+            dist = 0.0;
+            color = vec3(0.45, 0.7, 0.9);
+            break;
+        }
     }
-    return dist;
+    return vec4(dist, color);
 }
 
 void main() {
     vec2 aspect = normalize(size.xy);
     vec3 dir = normalize(vec3(pos * aspect, 1.0));
 
-    float d = raymarch(dir);
+    vec4 close = raymarch(dir);
+    float d = close.x;
+    vec3 shapeCol = close.yzw;
 
     vec3 light = getLight(dir * d);
 
-    color = vec4(light, 1.0);
+    color = vec4(light * shapeCol, 1.0);
 }
